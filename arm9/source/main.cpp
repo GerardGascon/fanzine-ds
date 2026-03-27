@@ -6,7 +6,10 @@
 #include <libtwl/ipc/ipcSync.h>
 #include <libtwl/ipc/ipcFifoSystem.h>
 #include "core/Environment.h"
-#include "errorDisplay/ErrorDisplay.h"
+#include "errorDisplay/ImageDisplay.h"
+#include "errorDisplay/VBlank.h"
+
+#include "test.h"
 
 #define NTR_CMD_ID_GAME_DISABLE_SCRAMBLING      0xFC00000000000000ull
 
@@ -31,6 +34,11 @@ static void disableScrambling()
     REG_MCCNT1 = MCCNT1_RESET_OFF | MCCNT1_APPLY_SCRAMBLE_SEED | MCCNT1_CLOCK_SCRAMBLER | MCCNT1_READ_DATA_DESCRAMBLE;
 }
 
+static void vblankIrq(u32 irqMask)
+{
+    VBlank::NotifyIrq();
+}
+
 int main(int argc, char* argv[])
 {
     Environment::Initialize();
@@ -40,11 +48,17 @@ int main(int argc, char* argv[])
     rtos_startMainThread();
     ipc_initFifoSystem();
 
+    VBlank::Init();
+
     while (ipc_getArm7SyncBits() != 7);
 
     disableScrambling();
 
-    ErrorDisplay().PrintError("hola :)) asdf");
+    rtos_setIrqFunc(RTOS_IRQ_VBLANK, vblankIrq);
+    rtos_enableIrqMask(RTOS_IRQ_VBLANK);
+
+    ImageDisplay().DrawTop(testTiles, testTilesLen, testMap, testMapLen, testPal, testPalLen);
+    ImageDisplay().DrawBottom(testTiles, testTilesLen, testMap, testMapLen, testPal, testPalLen);
 
     while(1);
 }
