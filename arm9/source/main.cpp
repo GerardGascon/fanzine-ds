@@ -6,7 +6,7 @@
 #include <libtwl/ipc/ipcSync.h>
 #include <libtwl/ipc/ipcFifoSystem.h>
 #include "core/Environment.h"
-#include "picoLoaderBootstrap.h"
+#include "errorDisplay/ErrorDisplay.h"
 
 #define NTR_CMD_ID_GAME_DISABLE_SCRAMBLING      0xFC00000000000000ull
 
@@ -44,12 +44,7 @@ int main(int argc, char* argv[])
 
     disableScrambling();
 
-    // Boot _picoboot.nds from the DSpico SD card.
-    pload_setBootDrive(PLOAD_BOOT_DRIVE_DLDI);
-    auto loadParams = pload_getLoadParams();
-    strlcat(loadParams->romPath, "fat:/_picoboot.nds", sizeof(loadParams->romPath));
-    loadParams->savePath[0] = 0;
-    pload_start();
+    ErrorDisplay().PrintError("hola :)) asdf");
 
     while(1);
 }

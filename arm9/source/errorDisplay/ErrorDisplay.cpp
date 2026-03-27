@@ -44,5 +44,4 @@ void ErrorDisplay::PrintError(const char* errorString)
     GFX_PLTT_BG_SUB[0] = 0;
     REG_MASTER_BRIGHT_SUB = 0x8010;
     REG_DISPCNT_SUB = 0x10000;
-    while (true);
 }
