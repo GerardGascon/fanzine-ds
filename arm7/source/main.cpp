@@ -48,18 +48,27 @@ int main()
 
     touchInit();
 
+    bool penDownLastFrame = false;
+
     while (true)
     {
         rtos_waitEvent(&sVBlankEvent, true, true);
 
         touchPosition touch;
-        if (touchPenDown()) {
-            touchReadXY(&touch);
-            if (touch.py >= 192 / 2)
-                ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
-            else
-                ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
+        bool penDownThisFrame = false;
+
+        if (touchReadXY(&touch), touch.px || touch.py) {
+            penDownThisFrame = true;
+
+            if (!penDownLastFrame) {
+                if (touch.py >= 192 / 2)
+                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
+                else
+                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
+            }
         }
+
+        penDownLastFrame = penDownThisFrame;
 
         if (pload_shouldStart())
         {
