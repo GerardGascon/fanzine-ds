@@ -53,6 +53,8 @@
 #include "Pages39.h"
 #include "Pages40.h"
 
+#define IPC_CHANNEL_PAGE_CONTROL 8
+
 #define NTR_CMD_ID_GAME_DISABLE_SCRAMBLING      0xFC00000000000000ull
 
 struct page {
@@ -138,12 +140,25 @@ void previousPage(ImageDisplay& display) {
 	drawCurrentPage(display);
 }
 
+static void pageControlHandler(u32 channel, u32 data, void* arg) {
+    ImageDisplay* display = (ImageDisplay*)arg;
+
+    switch (data) {
+        case 0:
+            nextPage(*display);
+            break;
+        case 1:
+            previousPage(*display);
+            break;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     Environment::Initialize();
     //mem_setDsCartridgeCpu(EXMEMCNT_SLOT1_CPU_ARM9);
 
-    //rtos_initIrq();
+    rtos_initIrq();
     rtos_startMainThread();
     ipc_initFifoSystem();
 
@@ -159,33 +174,17 @@ int main(int argc, char* argv[])
 	touchPosition touchXY;
 
 	ImageDisplay display;
+	ipc_setChannelHandler(
+        IPC_CHANNEL_PAGE_CONTROL,
+        pageControlHandler,
+        &display
+	);
+
     display.DrawTop(IntroTopBitmap, IntroTopPal);
     display.DrawBottom(IntroBottomBitmap, IntroBottomPal);
 
 	totalPairs = sizeof(pages) / (2 * sizeof(pages[0]));
     while(1) {
 		swiWaitForVBlank();
-		scanKeys();
-		int keys = keysDown();
-		int keysHeldNow = keysHeld();
-
-		if (keys & KEY_A) {
-			nextPage(display);
-		}
-
-		if (keys & KEY_B) {
-			previousPage(display);
-		}
-
-		if (keysHeldNow & KEY_TOUCH) {
-			touchRead(&touchXY);
-
-			nextPage(display);
-			if (touchXY.py >= 192/2) {
-				nextPage(display);
-			} else {
-				previousPage(display);
-			}
-		}
 	}
 }

@@ -6,12 +6,30 @@
 #include <libtwl/ipc/ipcFifoSystem.h>
 #include <libtwl/gfx/gfxStatus.h>
 #include "picoLoaderBootstrap.h"
+#include <nds.h>
+
+#define IPC_CHANNEL_PAGE_CONTROL 8
 
 static rtos_event_t sVBlankEvent;
 
 static void vblankIrq(u32 irqMask)
 {
     rtos_signalEvent(&sVBlankEvent);
+}
+
+static bool lastPenDown = false;
+
+static void pressed() {
+    touchPosition touch;
+
+    REG_KEYXY = 0;             // Start measurement
+    swiDelay(5);               // Short delay for ADC
+    touchReadXY(&touch);
+
+    if (touch.py >= 192 / 2)
+        ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
+    else
+        ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
 }
 
 int main()
@@ -30,9 +48,25 @@ int main()
 
     ipc_setArm7SyncBits(7);
 
+    touchInit();
+
     while (true)
     {
         rtos_waitEvent(&sVBlankEvent, true, true);
+
+        touchPosition touch;
+        if (touchPenDown()) {
+            touchReadXY(&touch);
+            if (!lastPenDown) {
+                if (touch.py >= 192 / 2)
+                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
+                else
+                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
+            }
+            lastPenDown = true;
+        } else {
+            lastPenDown = false;
+        }
 
         if (pload_shouldStart())
         {
