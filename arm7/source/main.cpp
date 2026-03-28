@@ -17,8 +17,6 @@ static void vblankIrq(u32 irqMask)
     rtos_signalEvent(&sVBlankEvent);
 }
 
-static bool lastPenDown = false;
-
 static void pressed() {
     touchPosition touch;
 
@@ -57,15 +55,10 @@ int main()
         touchPosition touch;
         if (touchPenDown()) {
             touchReadXY(&touch);
-            if (!lastPenDown) {
-                if (touch.py >= 192 / 2)
-                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
-                else
-                    ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
-            }
-            lastPenDown = true;
-        } else {
-            lastPenDown = false;
+            if (touch.py >= 192 / 2)
+                ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 0);
+            else
+                ipc_sendFifoMessage(IPC_CHANNEL_PAGE_CONTROL, 1);
         }
 
         if (pload_shouldStart())
