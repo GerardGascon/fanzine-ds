@@ -4,6 +4,6 @@ class ImageDisplay {
 public:
     ImageDisplay();
 
-    void DrawTop(const unsigned int* tiles, int tilesLen, const unsigned short* map, int mapLen, const unsigned short* palette, int paletteLen);
-    void DrawBottom(const unsigned int* tiles, int tilesLen, const unsigned short* map, int mapLen, const unsigned short* palette, int paletteLen);
+    void DrawTop(const unsigned int* bitmap, const unsigned short* palette);
+    void DrawBottom(const unsigned int* bitmap, const unsigned short* palette);
 };

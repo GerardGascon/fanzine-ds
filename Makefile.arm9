@@ -211,10 +211,10 @@ $(BUILDDIR)/%.nft2.o $(BUILDDIR)/%_nft2.h : %.nft2
 	$(V)$(BLOCKSDS)/tools/bin2c/bin2c $< $(@D)
 	$(V)$(CC) $(CFLAGS) -MMD -MP -c -o $(BUILDDIR)/$*.nft2.o $(BUILDDIR)/$*_nft2.c
 
-$(BUILDDIR)/%.png.o $(BUILDDIR)/%.h : %.png %.grit
+$(BUILDDIR)/%.png.o $(BUILDDIR)/%.h : %.png
 	@echo "  GRIT.9  $<"
 	@$(MKDIR) -p $(@D)
-	$(V)$(BLOCKSDS)/tools/grit/grit $< -ftc -W1 -o$(BUILDDIR)/$*
+	$(V)$(BLOCKSDS)/tools/grit/grit $< -W3 -gT! -gzl -gb8 -gb -ftc -o$(BUILDDIR)/$*
 	$(V)$(CC) $(CFLAGS) -MMD -MP -c -o $(BUILDDIR)/$*.png.o $(BUILDDIR)/$*.c
 	$(V)touch $(BUILDDIR)/$*.png.o $(BUILDDIR)/$*.h
 

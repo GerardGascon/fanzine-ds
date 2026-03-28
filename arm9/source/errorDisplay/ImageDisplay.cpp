@@ -9,45 +9,43 @@
 #include <cstring>
 #include "VBlank.h"
 
+static int bg;
+static int bgSub;
+
 ImageDisplay::ImageDisplay() {
+    videoSetMode(MODE_5_2D);
+    vramSetBankA(VRAM_A_MAIN_BG);
+    bg = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
 
+    videoSetModeSub(MODE_5_2D);
+    vramSetBankC(VRAM_C_SUB_BG);
+    bgSub = bgInitSub(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
 }
 
-static void InitVramMapping()
-{
-    mem_setVramAMapping(MEM_VRAM_AB_TEX_SLOT_1);
-    mem_setVramBMapping(MEM_VRAM_AB_MAIN_OBJ_00000);
-    mem_setVramCMapping(MEM_VRAM_C_SUB_BG_00000);
-    mem_setVramDMapping(MEM_VRAM_D_TEX_SLOT_0);
-    mem_setVramEMapping(MEM_VRAM_E_TEX_PLTT_SLOT_0123);
-    mem_setVramFMapping(MEM_VRAM_FG_MAIN_BG_00000);
-    mem_setVramGMapping(MEM_VRAM_FG_MAIN_BG_04000);
-    mem_setVramHMapping(MEM_VRAM_H_SUB_BG_EXT_PLTT_SLOT_0123);
-    mem_setVramIMapping(MEM_VRAM_I_SUB_OBJ_00000);
+static u8 temp[192 * 192] __attribute__((aligned(4)));
+static void drawBitmap8(const void* lz77Data, const u16* palette, void* paletteDst, u16* vram, int xOff, int yOff) {
+    decompress(lz77Data, temp, LZ77);
+    DC_FlushRange(temp, 192*192);
+
+    if (palette) {
+        DC_FlushRange((void*)palette, 256*2);
+        dmaCopy(palette, paletteDst, 256 * 2); // 256 colors, 2 bytes each
+    }
+
+    // Copy each line to VRAM
+    for (int y = 0; y < 192; y++) {
+        dmaCopy(
+            (u16*)&temp[y*192],                // source as halfwords
+            &vram[(y + yOff) * 256/2 + xOff], // destination in halfwords
+            192                          // 192 pixels = 96 halfwords
+        );
+    }
 }
 
-void ImageDisplay::DrawTop(const unsigned int* tiles, int tilesLen, const unsigned short* map, int mapLen, const unsigned short* palette, int paletteLen) {
-    InitVramMapping();
-
-    dma_ntrCopy32(3, tiles, GFX_BG_SUB, tilesLen);
-    dma_ntrCopy32(3, map, (u8*)GFX_BG_SUB + 0x3000, mapLen);
-    mem_setVramHMapping(MEM_VRAM_H_LCDC);
-    dma_ntrCopy32(3, palette, (void*)0x0689A000, paletteLen);
-    mem_setVramHMapping(MEM_VRAM_H_SUB_BG_EXT_PLTT_SLOT_0123);
-
-    VBlank::Wait();
-
-    sys_setMainEngineToBottomScreen();
-    REG_DISPCNT_SUB = 0x40211015;
-    REG_BG1HOFS_SUB = 0;
-    REG_BG1VOFS_SUB = 0;
-    REG_BG1CNT_SUB = 0x0680;
-    REG_DISPCNT_SUB |= 1 << 9;
-    REG_BLDCNT_SUB = 0x3D42;
-    REG_BLDALPHA_SUB = 0x10;
-    REG_MASTER_BRIGHT_SUB = 0;
+void ImageDisplay::DrawTop(const unsigned int* bitmap, const unsigned short* palette) {
+    drawBitmap8(bitmap, palette, BG_PALETTE, bgGetGfxPtr(bg), 16, 0);
 }
 
-void ImageDisplay::DrawBottom(const unsigned int* tiles, int tilesLen, const unsigned short* map, int mapLen, const unsigned short* palette, int paletteLen) {
-
+void ImageDisplay::DrawBottom(const unsigned int* bitmap, const unsigned short* palette) {
+    drawBitmap8(bitmap, palette, BG_PALETTE_SUB, bgGetGfxPtr(bgSub), 16, 0);
 }
