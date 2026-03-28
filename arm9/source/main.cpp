@@ -8,6 +8,7 @@
 #include "core/Environment.h"
 #include "errorDisplay/ImageDisplay.h"
 #include "errorDisplay/VBlank.h"
+#include <nds.h>
 
 #include "Empty.h"
 #include "IntroTop.h"
@@ -83,6 +84,9 @@ struct page pages[] = {
 	{ Pages40Bitmap, Pages40Pal }, { EmptyBitmap, EmptyPal },
 };
 
+static int totalPairs = 0;
+static int currentPair = -1;
+
 /// @brief Switches the DSpico into unscrambled game mode and disables scrambling.
 static void disableScrambling()
 {
@@ -109,27 +113,79 @@ static void vblankIrq(u32 irqMask)
     VBlank::NotifyIrq();
 }
 
+void drawCurrentPage(ImageDisplay& display) {
+    display.DrawTop(pages[currentPair * 2].bitmap, pages[currentPair * 2].palette);
+    display.DrawBottom(pages[currentPair * 2 + 1].bitmap, pages[currentPair * 2 + 1].palette);
+}
+
+void nextPage(ImageDisplay& display) {
+	if (currentPair >= totalPairs - 1)
+		return;
+
+	currentPair++;
+	//mmEffectCancel(paper_handle);
+	//paper_handle = mmEffectEx(&paper);
+	drawCurrentPage(display);
+}
+
+void previousPage(ImageDisplay& display) {
+	if (currentPair <= 0)
+		return;
+
+	currentPair--;
+	//mmEffectCancel(paper_handle);
+	//paper_handle = mmEffectEx(&paper);
+	drawCurrentPage(display);
+}
+
 int main(int argc, char* argv[])
 {
     Environment::Initialize();
-    mem_setDsCartridgeCpu(EXMEMCNT_SLOT1_CPU_ARM9);
+    //mem_setDsCartridgeCpu(EXMEMCNT_SLOT1_CPU_ARM9);
 
-    rtos_initIrq();
+    //rtos_initIrq();
     rtos_startMainThread();
     ipc_initFifoSystem();
 
-    VBlank::Init();
+    //VBlank::Init();
 
     while (ipc_getArm7SyncBits() != 7);
 
     disableScrambling();
 
-    rtos_setIrqFunc(RTOS_IRQ_VBLANK, vblankIrq);
-    rtos_enableIrqMask(RTOS_IRQ_VBLANK);
+    //rtos_setIrqFunc(RTOS_IRQ_VBLANK, vblankIrq);
+    //rtos_enableIrqMask(RTOS_IRQ_VBLANK);
+
+	touchPosition touchXY;
 
 	ImageDisplay display;
     display.DrawTop(IntroTopBitmap, IntroTopPal);
     display.DrawBottom(IntroBottomBitmap, IntroBottomPal);
 
-    while(1);
+	totalPairs = sizeof(pages) / (2 * sizeof(pages[0]));
+    while(1) {
+		swiWaitForVBlank();
+		scanKeys();
+		int keys = keysDown();
+		int keysHeldNow = keysHeld();
+
+		if (keys & KEY_A) {
+			nextPage(display);
+		}
+
+		if (keys & KEY_B) {
+			previousPage(display);
+		}
+
+		if (keysHeldNow & KEY_TOUCH) {
+			touchRead(&touchXY);
+
+			nextPage(display);
+			if (touchXY.py >= 192/2) {
+				nextPage(display);
+			} else {
+				previousPage(display);
+			}
+		}
+	}
 }
