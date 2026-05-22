@@ -12,9 +12,10 @@ export LIBTWL           ?= $(shell pwd)/libs/libtwl
 
 NAME		:= 	BOOTLOADER
 
-GAME_TITLE	:= DSpico
-GAME_AUTHOR	:= LNH team
-GAME_ICON	:= icon.bmp
+GAME_TITLE		:= La maquinita
+GAME_SUBTITLE	:= Un fanzine de Nanaki
+GAME_AUTHOR		:= Y un cartucho de Geri
+GAME_ICON		:= icon.bmp
 
 # DLDI and internal SD slot of DSi
 # --------------------------------
