@@ -1,5 +1,12 @@
-# DSpico Bootloader
-This is the repository for the DSpico Bootloader. It is a small NDS rom that initializes the DSpico and uses [Pico Loader](https://github.com/LNH-team/pico-loader) to boot the nds file at `fat:/_picoboot.nds`.
+# Fanzine DS
+
+This repository is based on LNH-team's [DSpico Bootloader](https://github.com/LNH-team/dspico-bootloader). It's meant to be used as a reader for fanzines that can be placed inside a DSpico cartridge.
+
+- Author of the fanzine used: [Nanaki](https://nanakigamedev.carrd.co/)
+- Author of the fanzine reader: [Geri](https://links.gerardgascon.com/)
+
+> [!NOTE]
+> The rest of the README is copied from the original repository.
 
 ## Setup & configuration
 We recommend using WSL (Windows Subsystem for Linux), or MSYS2 to compile this repository.
