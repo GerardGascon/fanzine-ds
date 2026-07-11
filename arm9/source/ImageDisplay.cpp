@@ -7,7 +7,6 @@
 #include <libtwl/sys/sysPower.h>
 #include <libtwl/dma/dmaNitro.h>
 #include <cstring>
-#include "VBlank.h"
 
 static int bg;
 static int bgSub;
@@ -34,11 +33,7 @@ static void drawBitmap8(const void* lz77Data, const u16* palette, void* paletteD
 
     // Copy each line to VRAM
     for (int y = 0; y < 192; y++) {
-        dmaCopy(
-            (u16*)&temp[y*192],                // source as halfwords
-            &vram[(y + yOff) * 256/2 + xOff], // destination in halfwords
-            192                          // 192 pixels = 96 halfwords
-        );
+        dmaCopy((u16*)&temp[y*192], &vram[(y + yOff) * 256/2 + xOff], 192);
     }
 }
 

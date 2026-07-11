@@ -1,4 +1,5 @@
-#include "common.h"
+#include <nds/ndstypes.h>
+#include <string.h>
 #include <libtwl/card/card.h>
 #include <libtwl/mem/memExtern.h>
 #include <libtwl/rtos/rtosIrq.h>
@@ -6,10 +7,10 @@
 #include <libtwl/ipc/ipcSync.h>
 #include <libtwl/ipc/ipcFifoSystem.h>
 #include "core/Environment.h"
-#include "errorDisplay/ImageDisplay.h"
-#include "errorDisplay/VBlank.h"
+#include "ImageDisplay.h"
 #include <nds.h>
 
+#pragma region Images
 #include "Empty.h"
 #include "IntroTop.h"
 #include "IntroBottom.h"
@@ -52,6 +53,7 @@
 #include "Pages38.h"
 #include "Pages39.h"
 #include "Pages40.h"
+#pragma endregion
 
 #define IPC_CHANNEL_PAGE_CONTROL 8
 
@@ -110,11 +112,6 @@ static void disableScrambling()
     REG_MCCNT1 = MCCNT1_RESET_OFF | MCCNT1_APPLY_SCRAMBLE_SEED | MCCNT1_CLOCK_SCRAMBLER | MCCNT1_READ_DATA_DESCRAMBLE;
 }
 
-static void vblankIrq(u32 irqMask)
-{
-    VBlank::NotifyIrq();
-}
-
 void drawCurrentPage(ImageDisplay& display) {
     display.DrawTop(pages[currentPair * 2].bitmap, pages[currentPair * 2].palette);
     display.DrawBottom(pages[currentPair * 2 + 1].bitmap, pages[currentPair * 2 + 1].palette);
@@ -125,8 +122,6 @@ void nextPage(ImageDisplay& display) {
 		return;
 
 	currentPair++;
-	//mmEffectCancel(paper_handle);
-	//paper_handle = mmEffectEx(&paper);
 	drawCurrentPage(display);
 }
 
@@ -135,8 +130,6 @@ void previousPage(ImageDisplay& display) {
 		return;
 
 	currentPair--;
-	//mmEffectCancel(paper_handle);
-	//paper_handle = mmEffectEx(&paper);
 	drawCurrentPage(display);
 }
 
@@ -156,20 +149,14 @@ static void pageControlHandler(u32 channel, u32 data, void* arg) {
 int main(int argc, char* argv[])
 {
     Environment::Initialize();
-    //mem_setDsCartridgeCpu(EXMEMCNT_SLOT1_CPU_ARM9);
 
     rtos_initIrq();
     rtos_startMainThread();
     ipc_initFifoSystem();
 
-    //VBlank::Init();
-
     while (ipc_getArm7SyncBits() != 7);
 
     disableScrambling();
-
-    //rtos_setIrqFunc(RTOS_IRQ_VBLANK, vblankIrq);
-    //rtos_enableIrqMask(RTOS_IRQ_VBLANK);
 
 	touchPosition touchXY;
 
